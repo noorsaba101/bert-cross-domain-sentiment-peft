@@ -280,6 +280,198 @@ After this fix, IMDB results became more balanced and credible.
 
 These results are not the final experimental results because development mode uses only one seed, one epoch, and subsampled cross-domain evaluation. However, they confirm that the pipeline behaves sensibly and that LoRA provides a strong performance-efficiency trade-off compared with full fine-tuning, while prompt-tuning is highly parameter-efficient but weaker in this setup.
 
+## How to Analyze the Final Results
+
+After the full experiment grid completes, the main analysis is based on the metrics saved in:
+
+```text
+outputs/results_registry_full.json
+```
+
+Each run contains results for SST-2 development performance, cross-domain evaluation, robustness checks, calibration, and computational cost. The final comparison should use the mean and standard deviation across the three seeds: `7`, `42`, and `2026`.
+
+### 1. Cross-Domain Generalization
+
+Cross-domain generalization is analyzed by comparing each model's in-domain SST-2 performance with its performance on the unseen review datasets:
+
+- Yelp
+- IMDB
+- Amazon Polarity
+
+The key metrics are:
+
+- `dev.accuracy`
+- `dev.f1_macro`
+- `yelp.accuracy`
+- `yelp.f1_macro`
+- `imdb.accuracy`
+- `imdb.f1_macro`
+- `amazon.accuracy`
+- `amazon.f1_macro`
+
+A model generalizes better if it maintains strong performance on Yelp, IMDB, and Amazon after being trained only on SST-2.
+
+A useful way to report this is to compute the average cross-domain score:
+
+```text
+cross_domain_avg_accuracy = mean(Yelp accuracy, IMDB accuracy, Amazon accuracy)
+cross_domain_avg_f1 = mean(Yelp F1, IMDB F1, Amazon F1)
+```
+
+Then compare the drop from SST-2:
+
+```text
+generalization_gap = SST-2 dev accuracy - cross-domain average accuracy
+```
+
+Lower gap means better cross-domain generalization.
+
+Interpretation:
+
+- If full fine-tuning has the highest SST-2 accuracy but a larger drop on Yelp/IMDB/Amazon, it may be more domain-specific.
+- If LoRA has slightly lower SST-2 accuracy but similar cross-domain performance, it may offer a better generalization-efficiency trade-off.
+- If prompt-tuning performs weakly across all domains, it suggests that the current prompt setup is underfitting or needs different hyperparameters.
+
+### 2. Robustness to Input Perturbations
+
+Robustness is analyzed using the perturbed SST-2 development evaluations saved as:
+
+- `robust_dev_punctuation`
+- `robust_dev_char_noise`
+- `robust_dev_synonym`
+
+These correspond to:
+
+- punctuation removal
+- character-level noise
+- synonym replacement
+
+For each method, compare the clean SST-2 dev performance with the perturbed performance.
+
+Example:
+
+```text
+punctuation_drop = clean dev accuracy - punctuation robustness accuracy
+char_noise_drop = clean dev accuracy - char-noise robustness accuracy
+synonym_drop = clean dev accuracy - synonym robustness accuracy
+```
+
+A more robust method has a smaller drop under perturbation.
+
+Typical interpretation:
+
+- Character noise is usually the hardest perturbation because it directly affects tokenization.
+- Punctuation removal may cause a moderate drop.
+- Synonym replacement may cause little change if the replacements are mild or limited.
+
+The robustness section should answer:
+
+```text
+Which method loses the least performance when the input text is slightly modified?
+```
+
+### 3. Confidence Calibration
+
+Calibration is analyzed using:
+
+- `ece_dev`
+- `temp`
+
+ECE means Expected Calibration Error. Lower ECE is better.
+
+The notebook applies temperature scaling on the SST-2 development set. The final analysis should compare ECE across methods.
+
+Interpretation:
+
+- Lower `ece_dev` means the model's confidence scores are more reliable.
+- A high accuracy model can still be poorly calibrated if it is overconfident.
+- If LoRA has similar accuracy but lower ECE than full fine-tuning, LoRA may be more reliable in confidence estimation.
+- The learned `temp` value shows how much temperature scaling adjusted the logits. A value greater than 1 usually softens overconfident predictions.
+
+Report something like:
+
+```text
+Calibration was evaluated using Expected Calibration Error (ECE) after temperature scaling on the SST-2 development set. Lower ECE indicates better confidence reliability.
+```
+
+### 4. Computational Efficiency
+
+Efficiency is analyzed using:
+
+- `params.total`
+- `params.trainable`
+- `train_seconds`
+- `cuda_mem.max_allocated_mb`
+- `cuda_mem.reserved_mb`
+
+The most important metric for PEFT comparison is trainable parameters.
+
+Expected pattern:
+
+- Full fine-tuning trains all BERT parameters.
+- LoRA trains far fewer parameters while keeping most of BERT frozen.
+- Prompt-tuning trains the fewest parameters.
+
+Efficiency should be discussed together with performance.
+
+Useful comparisons:
+
+```text
+trainable parameter reduction = full trainable params / PEFT trainable params
+training time difference = full train time - PEFT train time
+memory difference = full max CUDA memory - PEFT max CUDA memory
+```
+
+Interpretation:
+
+- If LoRA reaches close to full fine-tuning performance with much fewer trainable parameters, it gives a strong performance-cost trade-off.
+- If prompt-tuning uses very few parameters but has much lower accuracy, it is efficient but not effective in this setup.
+- If full fine-tuning gives the best accuracy but highest trainable parameter count, it remains the strongest but most expensive baseline.
+
+### 5. Ablation Analysis
+
+The ablation results compare LoRA settings:
+
+- rank `r=8` vs `r=16`
+- learning rate `2e-5` vs `3e-5`
+
+The goal is to see whether increasing LoRA rank or changing learning rate improves performance enough to justify the extra cost.
+
+Analyze:
+
+- SST-2 dev accuracy/F1
+- cross-domain average accuracy/F1
+- robustness scores
+- ECE
+- trainable parameters
+- training time
+- CUDA memory
+
+Interpretation:
+
+- If `r=16` improves accuracy only slightly but increases trainable parameters, `r=8` may be the better efficiency choice.
+- If `2e-5` improves stability or calibration, it may be preferable despite similar accuracy.
+- If results vary across seeds, report mean ± standard deviation rather than relying on one run.
+
+### 6. Final Conclusion Pattern
+
+The final conclusion should combine all four dimensions:
+
+```text
+Full fine-tuning achieved the strongest in-domain performance, but required training all BERT parameters. LoRA achieved competitive SST-2 and cross-domain performance while using far fewer trainable parameters, making it the best performance-efficiency trade-off in this experiment. Prompt-tuning was the most parameter-efficient method but underperformed in accuracy and cross-domain transfer, suggesting that it may require further tuning, more epochs, or different prompt initialization. Robustness and calibration results further show whether each method remains reliable under input perturbations and confidence-based evaluation.
+```
+
+### Summary Mapping
+
+| Claim in README | What to use from notebook |
+|---|---|
+| Cross-domain generalization | Yelp, IMDB, Amazon accuracy/F1 vs SST-2 dev |
+| Robustness | `robust_dev_punctuation`, `robust_dev_char_noise`, `robust_dev_synonym` |
+| Calibration | `ece_dev`, `temp` |
+| Efficiency | `trainable params`, `train_seconds`, `cuda_mem` |
+
+The final discussion should be based on the full multi-seed results, not only a single run. Single-run results are useful for sanity checking, but final conclusions should rely on mean and standard deviation across the planned seeds.
+
 ## Reference Paper
 
 This project is based on the standard BERT fine-tuning setup introduced in:
