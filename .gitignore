@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Model checkpoints / large generated artifacts
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# Optional local output clutter
+outputs/*.png
+outputs/*.jpg
+outputs/*.jpeg
