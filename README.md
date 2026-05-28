@@ -1,9 +1,8 @@
-# bert-cross-domain-sentiment-peft
-BERT-based sentiment analysis comparing full fine-tuning, LoRA, and prompt-tuning across SST-2, Yelp, IMDB, and Amazon reviews, with evaluations for cross-domain generalization, robustness, calibration, and efficiency.
-
 # Robust Cross-Domain Sentiment Analysis with BERT: PEFT vs Full Fine-Tuning
 
-This repository contains a CS5143 Natural Language Processing class project on robust cross-domain sentiment analysis using BERT. The project compares full fine-tuning with parameter-efficient fine-tuning (PEFT) methods, specifically LoRA and prompt-tuning, for binary sentiment classification.
+BERT-based sentiment analysis comparing full fine-tuning, LoRA, and prompt-tuning across SST-2, Yelp, IMDB, and Amazon reviews, with evaluations for cross-domain generalization, robustness, calibration, and efficiency.
+
+This repository contains a robust cross-domain sentiment analysis project using BERT. The project compares full fine-tuning with parameter-efficient fine-tuning (PEFT) methods, specifically LoRA and prompt-tuning, for binary sentiment classification.
 
 The main goal is to study not only in-domain performance on SST-2, but also cross-domain generalization, robustness to input perturbations, confidence calibration, and computational efficiency.
 
