@@ -526,5 +526,53 @@
         "reserved_mb": 2756.0
       }
     }
+  },
+  "lora_seed7_r16": {
+    "type": "ablation",
+    "mode": "lora",
+    "seed": 7,
+    "lora_r": 16,
+    "lr": 3e-05,
+    "result": {
+      "dev": {
+        "accuracy": 0.9036697247706422,
+        "f1_macro": 0.9035703001579778
+      },
+      "yelp": {
+        "accuracy": 0.8829736842105264,
+        "f1_macro": 0.8829677320174565
+      },
+      "imdb": {
+        "accuracy": 0.83184,
+        "f1_macro": 0.8317748459941132
+      },
+      "amazon": {
+        "accuracy": 0.88184,
+        "f1_macro": 0.8817635683495905
+      },
+      "ece_dev": 0.022048812564633306,
+      "temp": 1.5000000000000004,
+      "robust_dev_punctuation": {
+        "accuracy": 0.8910550458715596,
+        "f1_macro": 0.8908987942762694
+      },
+      "robust_dev_char_noise": {
+        "accuracy": 0.8727064220183486,
+        "f1_macro": 0.8726580230102816
+      },
+      "robust_dev_synonym": {
+        "accuracy": 0.9036697247706422,
+        "f1_macro": 0.9035703001579778
+      },
+      "params": {
+        "total": 112164100,
+        "trainable": 2680322
+      },
+      "train_seconds": 642.13,
+      "cuda_mem": {
+        "max_allocated_mb": 1771.22,
+        "reserved_mb": 2756.0
+      }
+    }
   }
 }
