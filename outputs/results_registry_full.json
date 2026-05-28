@@ -46,5 +46,101 @@
         "reserved_mb": 2686.0
       }
     }
+  },
+  "full_seed42": {
+    "type": "baseline",
+    "mode": "full",
+    "seed": 42,
+    "lora_r": "n/a",
+    "lr": 3e-05,
+    "result": {
+      "dev": {
+        "accuracy": 0.9323394495412844,
+        "f1_macro": 0.9323350891383404
+      },
+      "yelp": {
+        "accuracy": 0.8832105263157894,
+        "f1_macro": 0.8830345373590659
+      },
+      "imdb": {
+        "accuracy": 0.83904,
+        "f1_macro": 0.8386195908655634
+      },
+      "amazon": {
+        "accuracy": 0.88185,
+        "f1_macro": 0.8813581788459225
+      },
+      "ece_dev": 0.04187295039039139,
+      "temp": 4.6000000000000005,
+      "robust_dev_punctuation": {
+        "accuracy": 0.9094036697247706,
+        "f1_macro": 0.909403550579116
+      },
+      "robust_dev_char_noise": {
+        "accuracy": 0.8772935779816514,
+        "f1_macro": 0.8770955754986769
+      },
+      "robust_dev_synonym": {
+        "accuracy": 0.9323394495412844,
+        "f1_macro": 0.9323350891383404
+      },
+      "params": {
+        "total": 109483778,
+        "trainable": 109483778
+      },
+      "train_seconds": 515.78,
+      "cuda_mem": {
+        "max_allocated_mb": 2370.5,
+        "reserved_mb": 2686.0
+      }
+    }
+  },
+  "full_seed2026": {
+    "type": "baseline",
+    "mode": "full",
+    "seed": 2026,
+    "lora_r": "n/a",
+    "lr": 3e-05,
+    "result": {
+      "dev": {
+        "accuracy": 0.9231651376146789,
+        "f1_macro": 0.9231359237989989
+      },
+      "yelp": {
+        "accuracy": 0.8852105263157894,
+        "f1_macro": 0.8851726666943305
+      },
+      "imdb": {
+        "accuracy": 0.845,
+        "f1_macro": 0.8449530579878364
+      },
+      "amazon": {
+        "accuracy": 0.88536,
+        "f1_macro": 0.8851584311089855
+      },
+      "ece_dev": 0.04938047680012676,
+      "temp": 4.8,
+      "robust_dev_punctuation": {
+        "accuracy": 0.9071100917431193,
+        "f1_macro": 0.907104105427213
+      },
+      "robust_dev_char_noise": {
+        "accuracy": 0.8864678899082569,
+        "f1_macro": 0.8864557945976801
+      },
+      "robust_dev_synonym": {
+        "accuracy": 0.9231651376146789,
+        "f1_macro": 0.9231359237989989
+      },
+      "params": {
+        "total": 109483778,
+        "trainable": 109483778
+      },
+      "train_seconds": 513.4,
+      "cuda_mem": {
+        "max_allocated_mb": 2370.5,
+        "reserved_mb": 2686.0
+      }
+    }
   }
 }
