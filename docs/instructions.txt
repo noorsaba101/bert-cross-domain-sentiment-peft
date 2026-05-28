@@ -1,0 +1,32 @@
+CS5143 – Natural Language Processing
+Call for Class Project – Spring 2026
+
+The current offering of this course consists of a
+class project component. I have uploaded a bunch of sample projects for your perusal.
+
+This call of class project requires you to do the
+following:
+
+
+1.     A project team of 2 members is required
+
+2.     A project title and group members name with students’ IDs is required on the
+title page.
+
+3.     A small description on the project scope, problem and motivation for selecting
+your project
+
+4.     A seminal paper address the main idea that motivates your team. Dataset and GitHub
+available for the same.
+
+5.     Only the group lead needs to submit the class project proposal at the GCR site.
+
+Grading Scheme
+
+All class projects will be evaluated on the following
+grading criteria:
+
+·       Proposal (1 mark)  
+·       Implementation details as per the paper.   (2.5 Marks) 
+·       How closely results are produced as per paper. (2.5 Marks) 
+·       Code commenting and documentation (Python notebook is preferred) (4-Marks)
