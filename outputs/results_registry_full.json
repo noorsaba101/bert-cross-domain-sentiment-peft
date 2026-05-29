@@ -1012,5 +1012,55 @@
         "reserved_mb": 1388.0
       }
     }
+  },
+  "prompt_tuned_seed7_lr1e-3_vtokens30": {
+    "type": "exploratory_prompt",
+    "mode": "prompt",
+    "seed": 7,
+    "lora_r": "n/a",
+    "lr": 0.001,
+    "num_virtual_tokens": 30,
+    "epochs": 5,
+    "result": {
+      "dev": {
+        "accuracy": 0.8325688073394495,
+        "f1_macro": 0.8323138767274125
+      },
+      "yelp": {
+        "accuracy": 0.8067631578947368,
+        "f1_macro": 0.8067420642728587
+      },
+      "imdb": {
+        "accuracy": 0.7312,
+        "f1_macro": 0.729585028137708
+      },
+      "amazon": {
+        "accuracy": 0.813775,
+        "f1_macro": 0.8135648352509597
+      },
+      "ece_dev": 0.023368079181111185,
+      "temp": 1.4000000000000004,
+      "robust_dev_punctuation": {
+        "accuracy": 0.8256880733944955,
+        "f1_macro": 0.8252827502570457
+      },
+      "robust_dev_char_noise": {
+        "accuracy": 0.8142201834862385,
+        "f1_macro": 0.8142192061863804
+      },
+      "robust_dev_synonym": {
+        "accuracy": 0.8337155963302753,
+        "f1_macro": 0.8334472752084873
+      },
+      "params": {
+        "total": 109508356,
+        "trainable": 24578
+      },
+      "train_seconds": 325.27,
+      "cuda_mem": {
+        "max_allocated_mb": 1339.08,
+        "reserved_mb": 1448.0
+      }
+    }
   }
 }
