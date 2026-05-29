@@ -6,12 +6,15 @@ The completed experiments compare three training strategies for BERT-based binar
 - LoRA-based parameter-efficient fine-tuning
 - Prompt-tuning-based parameter-efficient fine-tuning
 
-The models were trained on SST-2 and evaluated on both in-domain and cross-domain datasets. The cross-domain datasets were Yelp Polarity, IMDB, and Amazon Polarity. The analysis focuses on four main aspects:
+In addition to the main baseline and ablation experiments, exploratory prompt-tuning follow-up runs were conducted with prompt-specific hyperparameters. These exploratory runs are reported separately from the main baseline comparison.
+
+The models were trained on SST-2 and evaluated on both in-domain and cross-domain datasets. The cross-domain datasets were Yelp Polarity, IMDB, and Amazon Polarity. The analysis focuses on five main aspects:
 
 - Cross-domain generalization
 - Robustness to input perturbations
 - Confidence calibration
 - Computational efficiency
+- Exploratory prompt-tuning sensitivity
 
 All reported baseline values are averaged across three seeds: `7`, `42`, and `2026`.
 
@@ -44,6 +47,8 @@ This makes LoRA the strongest parameter-efficient method in this experiment.
 
 Prompt-tuning was the most parameter-efficient method, training only about `16.9K` parameters. However, its performance remained weak and close to chance level on several datasets. Therefore, prompt-tuning did not provide a competitive accuracy-efficiency trade-off under the current configuration.
 
+This baseline prompt-tuning result should be interpreted only under the shared training setup. Later exploratory prompt-tuning runs show that prompt-tuning improves substantially when using a prompt-specific learning rate and longer training.
+
 ---
 
 ## 2. Cross-Domain Generalization
@@ -71,6 +76,8 @@ generalization_gap = SST-2 dev accuracy - cross-domain average accuracy
 Full fine-tuning achieved the highest absolute cross-domain accuracy. However, LoRA had a smaller generalization gap than full fine-tuning, meaning that LoRA retained more of its SST-2 performance when transferred to unseen review domains.
 
 The prompt-tuning gap is not very meaningful because its base SST-2 performance was already low. Therefore, the main useful comparison is between full fine-tuning and LoRA.
+
+The exploratory tuned prompt runs are discussed separately because they use a different hyperparameter regime. They improve cross-domain transfer substantially compared with baseline prompt-tuning, but they still remain below LoRA and full fine-tuning.
 
 Across the cross-domain datasets, IMDB was the hardest dataset. Yelp and Amazon results were closer to each other, while IMDB accuracy was consistently lower for both full fine-tuning and LoRA. This is likely because IMDB reviews are longer and more narrative than SST-2 sentences, while Yelp and Amazon reviews are more directly sentiment-oriented.
 
@@ -124,6 +131,8 @@ Full fine-tuning had higher accuracy but worse calibration than LoRA. Its learne
 
 Prompt-tuning had the weakest calibration overall, which is consistent with its unstable and low classification performance.
 
+The exploratory tuned prompt runs also improved calibration compared with baseline prompt-tuning. Baseline prompt-tuning had ECE `0.0941`, while tuned prompt `vt=20` reduced ECE to `0.0277` and tuned prompt `vt=30` reduced it further to `0.0234`. However, LoRA still had the best calibration overall among the main methods with ECE `0.0142`. These tuned prompt calibration results are exploratory because they come from a prompt-specific hyperparameter regime rather than the shared baseline setup.
+
 ---
 
 ## 5. Computational Efficiency
@@ -145,6 +154,8 @@ Full fine-tuning required training all BERT parameters, making it the most flexi
 LoRA trained only about `1.34M` parameters, which is approximately `81.6×` fewer than full fine-tuning. It also used less CUDA memory than full fine-tuning while maintaining competitive accuracy and better calibration.
 
 Prompt-tuning used the fewest trainable parameters and the lowest memory, but the performance was too weak to make it competitive in this experiment.
+
+The exploratory tuned prompt runs remained extremely lightweight. The `vt=20` tuned prompt setting used about `16.9K` trainable parameters, while `vt=30` used about `24.6K` trainable parameters. Even the `vt=30` setting trained far fewer parameters than LoRA's `1.34M` trainable parameters. However, the tuned prompt methods still had lower accuracy than LoRA, so they are best interpreted as ultra-lightweight alternatives rather than the strongest PEFT method.
 
 One interesting observation is that LoRA did not train faster than full fine-tuning in wall-clock time. This can happen because PEFT wrappers introduce implementation overhead, and runtime is not determined only by the number of trainable parameters. Therefore, LoRA’s main efficiency advantage in this notebook is:
 
@@ -337,7 +348,7 @@ Prompt-tuning freezes BERT and learns a small set of virtual prompt tokens at th
 Prompt-tuning = add trainable input prompts
 ```
 
-This explains why prompt-tuning was much weaker in this experiment. It has less control over the model’s internal representations and only steers the model through learned input embeddings.
+This explains why prompt-tuning was weak under the shared baseline setup: it had less control over the internal model layers and required a more suitable prompt-specific training configuration. The exploratory tuned prompt runs showed that prompt-tuning can improve substantially with a higher learning rate, longer training, and more virtual tokens, although it still remained below LoRA and full fine-tuning.
 
 ---
 
@@ -375,7 +386,7 @@ Overall, full fine-tuning produced the best raw accuracy, but LoRA provided the 
 
 Full fine-tuning achieved the highest in-domain and cross-domain accuracy, but required updating all `109.48M` BERT parameters. LoRA achieved competitive performance with about `81.6×` fewer trainable parameters, lower GPU memory usage, better calibration, and smaller robustness drops under perturbations.
 
-Prompt-tuning was the most parameter-efficient method, training only `16.9K` parameters, but it performed weakly under the current configuration and did not provide a competitive accuracy-efficiency trade-off.
+Baseline prompt-tuning was the most parameter-efficient main method, training only `16.9K` parameters, but it performed weakly under the shared baseline configuration. However, the exploratory tuned prompt runs showed that prompt-tuning can improve substantially with prompt-specific hyperparameters. The best tuned prompt setting, `vt=30`, reached `0.8490` SST-2 dev accuracy and `0.7974` cross-domain average accuracy while training only `24.6K` parameters. Despite this improvement, tuned prompt-tuning still remained below LoRA and full fine-tuning in accuracy.
 
 The LoRA ablation results showed that increasing rank from `8` to `16` only slightly improved accuracy while doubling the number of trainable parameters. Therefore, LoRA with rank `8` offered the better efficiency balance in this experiment.
 
@@ -383,6 +394,7 @@ The final takeaway is:
 
 ```text
 Full fine-tuning is best for maximum accuracy.
-LoRA is best for practical performance-efficiency trade-off.
-Prompt-tuning is most parameter-efficient but not competitive under the current setup.
+LoRA is best for the overall performance-efficiency trade-off.
+Baseline prompt-tuning is weakest under the shared setup.
+Tuned prompt-tuning shows that prompt methods are highly hyperparameter-sensitive and can become a useful ultra-lightweight alternative, but still remain below LoRA in this experiment.
 ```
