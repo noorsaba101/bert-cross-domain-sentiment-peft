@@ -207,7 +207,107 @@ LoRA r=8, lr=3e-5
 
 ---
 
-## 7. Conceptual Interpretation of the Methods
+## 7. Exploratory Prompt-Tuning Follow-Up
+
+The main baseline comparison used the same general training setup for full fine-tuning, LoRA, and prompt-tuning. Under that shared setup, prompt-tuning performed weakly, with an average SST-2 development accuracy of `0.5535` and cross-domain average accuracy of `0.5170`.
+
+Because prompt-tuning often requires a different hyperparameter regime than full fine-tuning or LoRA, additional exploratory prompt-tuning runs were conducted. These runs are reported separately from the main baseline comparison and are not treated as replacements for the baseline prompt-tuning results.
+
+The exploratory prompt-tuning setup used:
+
+```text
+learning rate = 1e-3
+epochs = 5
+seeds = [7, 42, 2026]
+```
+
+Two virtual-token settings were tested:
+
+```text
+virtual_tokens = 20
+virtual_tokens = 30
+```
+
+These runs were labeled as `exploratory_prompt` in the registry to keep them separate from the main baseline and LoRA ablation results.
+
+### Exploratory Prompt-Tuning Results
+
+| Method | SST-2 Dev Accuracy | Cross-Domain Avg Accuracy | ECE ↓ | Trainable Parameters | CUDA Memory |
+|---|---:|---:|---:|---:|---:|
+| Prompt baseline | 0.5535 | 0.5170 | 0.0941 | 16.9K | 1297 MB |
+| Tuned prompt, vt=20 | 0.8486 | 0.7804 | 0.0277 | 16.9K | 1293 MB |
+| Tuned prompt, vt=30 | **0.8490** | **0.7974** | **0.0234** | 24.6K | 1339 MB |
+
+The tuned prompt experiments improved substantially over the baseline prompt-tuning setup.
+
+Compared with baseline prompt-tuning:
+
+```text
+vt=20 improved SST-2 dev accuracy by about 29.5 percentage points
+vt=20 improved cross-domain average accuracy by about 26.3 percentage points
+
+vt=30 improved SST-2 dev accuracy by about 29.6 percentage points
+vt=30 improved cross-domain average accuracy by about 28.0 percentage points
+```
+
+This shows that the original prompt-tuning baseline was not necessarily weak because prompt-tuning itself is ineffective. Rather, prompt-tuning was highly sensitive to the training setup. A higher learning rate and longer training allowed the prompt parameters to learn much more effectively.
+
+### Virtual Tokens 20 vs 30
+
+The `vt=30` setting performed slightly better than `vt=20`.
+
+| Setting | SST-2 Dev Accuracy | Cross-Domain Avg Accuracy | ECE ↓ |
+|---|---:|---:|---:|
+| vt=20 | 0.8486 | 0.7804 | 0.0277 |
+| vt=30 | **0.8490** | **0.7974** | **0.0234** |
+
+The SST-2 development accuracy was almost the same for both settings. However, `vt=30` gave better cross-domain performance, improving the cross-domain average by about `1.7` percentage points over `vt=20`.
+
+This suggests that increasing the number of virtual tokens gave the prompt more capacity, which helped transfer to Yelp, IMDB, and Amazon. However, it also increased the number of trainable parameters from about `16.9K` to about `24.6K`.
+
+### Tuned Prompt-Tuning vs LoRA
+
+Although tuned prompt-tuning improved substantially, it still did not outperform LoRA.
+
+| Method | SST-2 Dev Accuracy | Cross-Domain Avg Accuracy | Trainable Parameters |
+|---|---:|---:|---:|
+| LoRA r=8 | **0.9037** | **0.8610** | 1.34M |
+| Tuned prompt, vt=30 | 0.8490 | 0.7974 | 24.6K |
+
+LoRA remained stronger by about:
+
+```text
+5.5 percentage points on SST-2 dev accuracy
+6.4 percentage points on average cross-domain accuracy
+```
+
+However, tuned prompt-tuning used far fewer trainable parameters than LoRA. The `vt=30` tuned prompt setup trained only about `24.6K` parameters, while LoRA trained about `1.34M` parameters.
+
+Therefore, tuned prompt-tuning can be viewed as an ultra-lightweight alternative, but LoRA remains the better overall performance-efficiency trade-off when accuracy and transfer performance are prioritized.
+
+### Interpretation
+
+The exploratory prompt-tuning results change the interpretation of prompt-tuning.
+
+The baseline prompt-tuning result showed that prompt-tuning was not competitive under the shared baseline setup. However, the tuned prompt results show that prompt-tuning can improve substantially when given a more suitable prompt-specific setup.
+
+The main conclusion is therefore:
+
+```text
+Prompt-tuning is highly sensitive to hyperparameters. Under the shared baseline setup, it performed weakly. With a higher learning rate, longer training, and more virtual tokens, it improved substantially, but still remained below LoRA and full fine-tuning in accuracy.
+```
+
+These exploratory results should remain separate from the main baseline comparison because they use a different hyperparameter regime. The main fair comparison remains:
+
+```text
+full fine-tuning vs LoRA vs baseline prompt-tuning under the shared setup
+```
+
+The tuned prompt results are best reported as a follow-up experiment showing that prompt-tuning can become more effective when configured specifically for prompt learning.
+
+---
+
+## 8. Conceptual Interpretation of the Methods
 
 ### Full Fine-Tuning
 
@@ -241,7 +341,7 @@ This explains why prompt-tuning was much weaker in this experiment. It has less 
 
 ---
 
-## 8. Accuracy and Macro-F1
+## 9. Accuracy and Macro-F1
 
 The notebook reports both accuracy and macro-F1.
 
@@ -255,7 +355,7 @@ Micro-F1 was not used because, for single-label binary classification, micro-F1 
 
 ---
 
-## 9. Notes on Synonym Perturbation
+## 10. Notes on Synonym Perturbation
 
 The synonym perturbation produced negligible performance changes for all methods.
 
@@ -269,7 +369,7 @@ Synonym perturbation caused negligible change, suggesting that the implemented s
 
 ---
 
-## 10. Final Conclusion
+## 11. Final Conclusion
 
 Overall, full fine-tuning produced the best raw accuracy, but LoRA provided the best performance-efficiency trade-off.
 
