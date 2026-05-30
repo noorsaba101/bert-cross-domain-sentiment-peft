@@ -37,7 +37,6 @@ The final full run uses three random seeds:
 .
 |-- README.md
 |-- sentiment_cross_domain.ipynb
-|-- RESULT_ANALYSIS.md
 |-- docs/
 |   |-- experiment_details.md
 |   |-- proposal.md
@@ -56,8 +55,7 @@ Large model checkpoint files such as `.pt`, `.pth`, `.bin`, and `.safetensors` a
 
 ## Documentation
 
-- [docs/experiment_details.md](docs/experiment_details.md) describes the research questions, datasets, metrics, notebook workflow, development-mode sanity results, and guidance for interpreting final results.
-- [RESULT_ANALYSIS.md](RESULT_ANALYSIS.md) contains the completed result analysis, including baseline comparison, LoRA ablations, exploratory prompt-tuning follow-up runs, and final conclusions.
+- [docs/experiment_details.md](docs/experiment_details.md) is the main project report. It includes the research questions, datasets, metrics, notebook workflow, development-mode sanity checks, completed result analysis, LoRA ablations, exploratory prompt-tuning follow-up runs, and final conclusions.
 - [docs/proposal.md](docs/proposal.md) contains the original class project proposal.
 - [docs/project_rationale.md](docs/project_rationale.md) explains the experiment design rationale.
 - [docs/proposal_submission.pdf](docs/proposal_submission.pdf) is the submitted proposal document for the course project.
