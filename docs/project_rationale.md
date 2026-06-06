@@ -63,7 +63,7 @@ Why each component is included
 6) Calibration (ECE + temperature scaling)
 - Why: confidence quality matters for real decision systems.
 - Benefit: better understanding of overconfidence/underconfidence behavior.
-- Expected outcome: lower ECE after temperature scaling, with minimal impact on accuracy.
+- Expected outcome: well-calibrated confidence (low ECE) after temperature scaling, with minimal impact on accuracy. Note: in the final notebook the temperature is fit by minimizing NLL and ECE is reported only after scaling (pre-scaling ECE is not recorded), so the calibration result is described rather than quantified as an improvement.
 
 7) Early stopping + best-checkpoint restore
 - Why: prevent overfitting and reduce unnecessary training.
@@ -104,6 +104,5 @@ Potential risks and mitigations
 Expected deliverables for supervisor review
 - `proposal.md` - project proposal aligned with implementation.
 - `sentiment_cross_domain.ipynb` - full experiment notebook.
-- `outputs/results.json` or `outputs/results_summary.json` - core metrics.
-- `outputs/ablations.json` - ablation metrics for performance vs cost analysis.
+- `outputs/results_registry_full.json` - core metrics for the final multi-seed run, including baselines, LoRA ablations, and exploratory prompt runs (and `outputs/results_registry_dev.json` for fast development-mode sanity runs).
 

@@ -4,8 +4,8 @@ Spring 2026 – Class Project Proposal
 Title: Robust Cross‑Domain Sentiment Analysis with BERT: PEFT vs Full Fine‑Tuning
 
 Group Members
-- Lead: <Full Name> — <Student ID>
-- Member: <Full Name> — <Student ID>
+- Lead: Noor us Saba — K247625
+- Member: Kanza Syed — K247604
 
 1) Project Scope, Problem, and Motivation
 Sentiment models trained on one domain (e.g., movie reviews) often degrade on other domains (e.g., product or restaurant reviews). This project studies cross‑domain generalization for sentiment analysis using modern transfer techniques. We will fine‑tune a pre‑trained BERT model and compare full fine‑tuning to parameter‑efficient fine‑tuning (PEFT, e.g., LoRA and prompt‑tuning). We will evaluate robustness under domain shift, simple text perturbations, and assess calibration quality.

@@ -41,6 +41,44 @@ The notebook compares three fine-tuning strategies:
 | LoRA | Adds trainable low-rank adaptation matrices while keeping most base model parameters frozen |
 | Prompt-tuning | Adds trainable virtual prompt embeddings with very few trainable parameters |
 
+## Relationship to the Seminal Paper (BERT, Devlin et al., 2019)
+
+This project uses **BERT (Devlin et al., 2019)** as its seminal paper. We reproduce the paper's SST-2 full fine-tuning baseline and then extend it with parameter-efficient methods to study cross-domain generalization. This section documents how the implementation maps to the paper and how closely our results match it.
+
+### Implementation Fidelity
+
+The full fine-tuning setup follows the BERT paper's fine-tuning recipe (§4.1 and Appendix A.3). Every hyperparameter falls inside the ranges the paper specifies:
+
+| Component | BERT paper specification | This project | Match |
+|---|---|---|---|
+| Base model | `BERT-BASE` (110M parameters, 12 layers) | `bert-base-uncased` | Yes |
+| Classification setup | Linear head on the `[CLS]` token, fine-tuned end-to-end | `AutoModelForSequenceClassification`, `num_labels=2` | Yes |
+| Tokenization | WordPiece, `[CLS]`/`[SEP]`, uncased | WordPiece via `AutoTokenizer`, `max_length=128` | Yes |
+| Optimizer | Adam (we use AdamW, the decoupled-decay variant) | `AdamW`, weight decay `0.01` | Yes |
+| Learning rate | one of {5e-5, 3e-5, 2e-5} | `3e-5` baseline; `2e-5` vs `3e-5` ablation | Yes |
+| Batch size | one of {16, 32} | `16` | Yes |
+| Epochs | one of {2, 3, 4} | `3` | Yes |
+| Dropout | 0.1 | model default (0.1) | Yes |
+| LR schedule | linear warmup then decay | linear schedule, warmup ratio `0.06` | Yes |
+
+### Methods Beyond the BERT Paper
+
+LoRA and prompt-tuning are **not** part of Devlin et al. (2019). They are added as parameter-efficient alternatives to the paper's full fine-tuning, and each is implemented following its own source paper:
+
+- **LoRA** — Hu et al. (2021), *LoRA: Low-Rank Adaptation of Large Language Models*, [arXiv:2106.09685](https://arxiv.org/abs/2106.09685). Implemented with the `peft` library; ranks `r=8` and `r=16` are studied in the ablation.
+- **Prompt-tuning** — Lester et al. (2021), *The Power of Scale for Parameter-Efficient Prompt Tuning*, [arXiv:2104.08691](https://arxiv.org/abs/2104.08691). Implemented with `peft` using `20`/`30` virtual tokens.
+
+In short: BERT defines the base model and the full fine-tuning recipe we reproduce, and we extend it with LoRA and prompt-tuning to study the efficiency vs. performance trade-off under domain shift.
+
+### Results Reproduction
+
+The BERT paper reports **BERT-BASE SST-2 = 93.5%** (Table 1, GLUE test server). Our full fine-tuning baseline reaches **0.9289 SST-2 dev accuracy** (mean over seeds `7, 42, 2026`).
+
+Two points make this a faithful reproduction rather than an exact-number match:
+
+- **Dev vs. test split.** The paper's 93.5% comes from the GLUE test server, whose labels are hidden. SST-2 test labels are not public, so we evaluate on the SST-2 validation (dev) split. A small dev-vs-test gap is expected.
+- **Reference value used in the notebook.** The notebook's sanity-check cell compares against **~93%** rather than the exact 93.5%. This is a small deliberate deviation: 93% is a representative BERT-base SST-2 figure, and the full multi-seed experiment grid (a multi-day, GPU-intensive job) was not re-run solely to refresh this single comparison line. Our result sits within roughly 1 percentage point of either reference, so the conclusion is unchanged: the implementation reproduces the BERT SST-2 baseline closely.
+
 ## Datasets
 
 ### In-Domain Training and Validation
@@ -88,7 +126,7 @@ The notebook evaluates robustness under three text perturbations:
 The notebook computes:
 
 - Expected Calibration Error (ECE)
-- Temperature scaling on the SST-2 validation set
+- Temperature scaling on the SST-2 validation set. The temperature is fit by minimizing negative log-likelihood (NLL), and ECE is then reported on the temperature-scaled probabilities. Pre-scaling ECE is not recorded, so the reported values describe the calibrated confidence quality rather than a measured improvement from scaling.
 
 ### Cost and Efficiency Metrics
 
@@ -120,18 +158,22 @@ This supports mean and standard deviation reporting across seeds.
 
 The main notebook follows this structure:
 
-1. Environment and package validation
-2. Dataset loading
-3. Tokenization and dataloader preparation
-4. Model construction for full fine-tuning, LoRA, and prompt-tuning
-5. Training with early stopping and best-checkpoint restore
-6. In-domain evaluation on SST-2
-7. Cross-domain evaluation on Yelp, IMDB, and Amazon
-8. Robustness testing using input perturbations
-9. Calibration analysis using ECE and temperature scaling
-10. Multi-seed runs and LoRA ablations
-11. Performance vs cost comparison
-12. Result interpretation and limitations
+1. **Framing** — project overview, problem and research questions, seminal paper and datasets, design rationale, and project plan.
+2. **Relationship to the BERT paper** — implementation fidelity and results reproduction.
+3. **Pipeline** — environment check, configuration, dataset loading, tokenization/dataloaders, model construction (full, LoRA, prompt), training/evaluation with early stopping, and the cost/robustness/calibration utilities.
+4. **Experiment grid and orchestrator** — the full multi-seed run plan executed with a resumable results registry.
+5. **Baseline sanity check** against the BERT paper's SST-2 number.
+6. **Results and analysis**, computed from the saved registry and organized by dimension:
+   1. In-domain and cross-domain generalization
+   2. Robustness to input perturbations
+   3. Confidence calibration
+   4. Computational efficiency
+   5. LoRA ablation (rank and learning rate)
+   6. Exploratory prompt-tuning follow-up
+   7. Champions head-to-head (best of each method)
+7. **Final discussion and conclusion**, with an auto-generated "best per dimension" summary.
+
+Each result section is followed by a short interpretation note covering caveats such as the generalization-gap limitation for weak models, why character noise is the hardest perturbation, the mild synonym setup, and how the temperature/ECE values should be read.
 
 ## Project Documents
 
@@ -510,7 +552,7 @@ The prompt-tuning gap is not very meaningful because its base SST-2 performance 
 
 The exploratory tuned prompt runs are discussed separately because they use a different hyperparameter regime. They improve cross-domain transfer substantially compared with baseline prompt-tuning, but they still remain below LoRA and full fine-tuning.
 
-Across the cross-domain datasets, IMDB was the hardest dataset. Yelp and Amazon results were closer to each other, while IMDB accuracy was consistently lower for both full fine-tuning and LoRA. This is likely because IMDB reviews are longer and more narrative than SST-2 sentences, while Yelp and Amazon reviews are more directly sentiment-oriented.
+Across the cross-domain datasets, IMDB was the hardest dataset. Yelp and Amazon results were closer to each other, while IMDB accuracy was consistently lower for both full fine-tuning and LoRA. This is likely because IMDB reviews are longer and more narrative than SST-2 sentences, while Yelp and Amazon reviews are more directly sentiment-oriented. Because inputs are truncated at a maximum length of 128 tokens, sentiment evidence appearing later in a long IMDB review can be cut off, which further increases the difficulty of this domain.
 
 ### 3. Robustness to Input Perturbations
 
@@ -544,7 +586,7 @@ Prompt-tuning robustness is less meaningful because the clean prompt-tuning perf
 
 ### 4. Confidence Calibration
 
-Confidence calibration was measured using Expected Calibration Error (ECE) on the SST-2 development set after temperature scaling.
+Confidence calibration was measured using Expected Calibration Error (ECE) on the SST-2 development set after temperature scaling. The temperature was fit by minimizing negative log-likelihood; because pre-scaling ECE is not recorded, these values describe the calibrated confidence quality rather than a measured improvement from scaling.
 
 Lower ECE indicates better calibration.
 
@@ -594,6 +636,8 @@ better calibration
 ```
 
 rather than faster training time.
+
+It is also worth noting that the reported `train_seconds` measures training only. Total runtime per configuration additionally includes cross-domain evaluation, which is dominated by the Amazon Polarity test set: it is by far the largest of the four datasets and is evaluated in full in the final run. In practice, Amazon evaluation is often the largest single time cost of a run, even though it is not part of the training-time metric.
 
 ### 6. LoRA Ablation Analysis
 
@@ -787,13 +831,29 @@ Micro-F1 was not used because, for single-label binary classification, micro-F1 
 
 The synonym perturbation produced negligible performance changes for all methods.
 
-This likely means that the synonym replacement function was mild, replaced only a small number of words, or often returned the original sentence. Therefore, synonym robustness should not be over-interpreted.
+This is explained by the implementation: the synonym function replaces only the exact words `good`, `bad`, `great`, and `terrible`, each with probability 0.3, and only with same-sentiment substitutes (for example `good -> nice`, `great -> excellent`). Many development sentences contain none of these words, and when a replacement does occur the sentiment direction is preserved. The near-zero drop therefore indicates stability under this mild, sentiment-preserving edit only, and should not be over-interpreted as robustness to genuine paraphrasing.
 
 A suitable limitation statement is:
 
 ```text
 Synonym perturbation caused negligible change, suggesting that the implemented synonym replacement was mild or affected only a small portion of tokens. Future work could use stronger semantic perturbation methods or controlled paraphrase generation.
 ```
+
+### 10b. Champions Head-to-Head: Best of Each Method
+
+The sections above compare methods within their own family (LoRA ranks against each other, the tuned prompt against the prompt baseline). The notebook also includes a final head-to-head that lifts the best configuration of each method out of those sweeps and compares them directly:
+
+- **Full fine-tuning** (the single configuration),
+- **LoRA `r=8, lr=3e-5`** (the LoRA efficiency sweet spot; `r=16` added only about 0.1 pp for double the trainable parameters),
+- **Tuned prompt `vt=20`** (the most parameter-efficient tuned prompt).
+
+| Method | SST-2 Dev Accuracy | Cross-Domain Avg Accuracy | ECE | Trainable Parameters | Reduction vs Full |
+|---|---:|---:|---:|---:|---:|
+| Full fine-tuning | **0.9289** | **0.8720** | 0.0468 | 109,483,778 | 1.0x |
+| LoRA r=8 | 0.9037 | 0.8610 | **0.0142** | 1,340,930 | 81.6x |
+| Tuned prompt vt=20 | 0.8486 | 0.7804 | 0.0277 | 16,898 | 6,479x |
+
+Although the internal prompt comparison found `vt=30` slightly better on cross-domain accuracy and calibration, the head-to-head uses `vt=20` as the representative prompt champion: prompt-tuning's role here is the ultra-lightweight extreme, the `vt=30` edge (about 1.7 pp cross-domain) does not change the ranking, and `vt=20` keeps a clean three-way story of maximum accuracy (Full FT) / best balance (LoRA) / minimum footprint (prompt). Relative to full fine-tuning, LoRA trades about 2.5 pp in-domain and 1.1 pp cross-domain for an 81.6x parameter cut and better calibration, while the tuned prompt gives up more accuracy for an even larger (about 6,479x) parameter cut.
 
 ### 11. Final Conclusion
 
